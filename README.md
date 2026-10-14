@@ -2,7 +2,7 @@
 
 Reaction Test is a small web game that measures how fast you react. Tap the box to start, wait for it to turn orange, then tap as fast as you can. It shows your time in milliseconds, your last eight results, your best time and your average. Your best time is saved on your device.
 
-Live demo: https://YOUR-USERNAME.github.io/Reaction-Test/
+Live demo: https://rajshrestha-07.github.io/Reaction-Time-Test/
 
 Built with: HTML, CSS and JavaScript.
 
