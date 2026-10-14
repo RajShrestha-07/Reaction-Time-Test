@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Reaction Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column on graph paper. A big tap box that changes color, a history of recent times, and best and average. */
+:root {
+  --paper: #eef1f4; --card: #ffffff; --ink: #14233a; --muted: #5c6b80; --line: #cdd5df;
+  --on: #e8452c; --good: #1f7a4d; --wait: #5c6b80;
+  --accent: #14233a; --accent-ink: #eef1f4;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1826; --card: #17233a; --ink: #e7ecf4; --muted: #93a2ba; --line: #2a3a56;
+    --on: #ffb02e; --good: #6fd39b; --wait: #93a2ba; --accent: #e7ecf4; --accent-ink: #0f1826; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1826; --card: #17233a; --ink: #e7ecf4; --muted: #93a2ba; --line: #2a3a56;
+  --on: #ffb02e; --good: #6fd39b; --wait: #93a2ba; --accent: #e7ecf4; --accent-ink: #0f1826; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--mono); font-size: 14px; line-height: 1.5;
+  padding-inline: 16px; padding-block: 28px 56px;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: -1px -1px;
+}
+main { max-width: 440px; margin-inline: auto; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2rem, 9vw, 3rem); line-height: 1; letter-spacing: -0.02em; margin: 0; }
+p { margin: 0; color: var(--muted); }
+button { font: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--on); outline-offset: 2px; }
+.react { width: 100%; height: 240px; border: 2px solid var(--ink); border-radius: 4px; color: var(--accent-ink); background: var(--wait); font: 800 1.6rem var(--display); padding: 12px; text-wrap: balance; touch-action: manipulation; }
+.react.go { background: var(--on); color: #14233a; }
+.react.done { background: var(--good); color: #0f1826; }
+.hist { display: flex; flex-wrap: wrap; gap: 6px; min-height: 2em; }
+.tag { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-variant-numeric: tabular-nums; }
+.stat { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat b { color: var(--ink); font-weight: 600; }
+.btn { font-weight: 600; padding: 9px 14px; color: var(--accent-ink); background: var(--accent); border: 2px solid var(--accent); border-radius: 4px; align-self: flex-start; }
+</style>
+
+<main>
+  <div class="panel">
+    <h1>Reaction Test</h1>
+    <p>Tap the box to start. When it turns orange, tap as fast as you can. Average human reaction time is around 250 ms.</p>
+    <button class="react" id="box" type="button">Tap to start</button>
+    <div class="hist" id="hist" aria-label="Recent results"></div>
+    <div class="stat"><span>Last <b id="last">-</b></span><span>Best <b id="best">-</b></span><span>Average <b id="avg">-</b></span><span>Tries <b id="n">0</b></span></div>
+    <button class="btn" id="reset" type="button">Reset scores</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var box = $("box"), state = "idle", t0 = 0, timer = null, results = [], bestAll = null;
+  try { var sb = localStorage.getItem("reaction-best"); if (sb) bestAll = Number(sb); } catch (e) {}
+  if (bestAll !== null) $("best").textContent = bestAll + " ms";
+
+  function setBox(cls, text) { box.className = "react " + cls; box.textContent = text; }
+  function summary() {
+    if (!results.length) return;
+    var avg = Math.round(results.reduce(function (a, b) { return a + b; }, 0) / results.length);
+    $("last").textContent = results[results.length - 1] + " ms";
+    $("avg").textContent = avg + " ms";
+    $("n").textContent = results.length;
+    $("best").textContent = bestAll + " ms";
+    $("hist").textContent = "";
+    results.slice(-8).forEach(function (r) {
+      var t = document.createElement("span"); t.className = "tag"; t.textContent = r + " ms"; $("hist").appendChild(t);
+    });
+  }
+  box.addEventListener("click", function () {
+    if (state === "idle" || state === "result" || state === "early") {
+      state = "wait"; setBox("", "Wait for orange...");
+      timer = setTimeout(function () { state = "go"; t0 = performance.now(); setBox("go", "TAP NOW!"); }, 1500 + Math.random() * 2500);
+    } else if (state === "wait") {
+      clearTimeout(timer); state = "early"; setBox("", "Too early! Tap to try again.");
+    } else if (state === "go") {
+      var ms = Math.round(performance.now() - t0);
+      results.push(ms);
+      if (bestAll === null || ms < bestAll) { bestAll = ms; try { localStorage.setItem("reaction-best", String(ms)); } catch (e) {} }
+      state = "result"; setBox("done", ms + " ms. Tap to go again."); summary();
+    }
+  });
+  $("reset").addEventListener("click", function () {
+    clearTimeout(timer); results = []; bestAll = null; state = "idle";
+    try { localStorage.removeItem("reaction-best"); } catch (e) {}
+    ["last", "best", "avg"].forEach(function (id) { $(id).textContent = "-"; });
+    $("n").textContent = 0; $("hist").textContent = ""; setBox("", "Tap to start");
+  });
+})();
+</script>
+
+</body></html>
